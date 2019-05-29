@@ -1,46 +1,36 @@
 module Data.Amplitude.Tracking where
 
-import Data.Symbol (class IsSymbol, SProxy, reflectSymbol)
+import Data.Amplitude.Tracking.Config (Config)
 import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toNullable)
+import Data.Symbol (class IsSymbol, SProxy (..), reflectSymbol)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
 import Prelude
+import Prim.Row (class Union)
+import Type.Proxy (Proxy (..))
 
--- When dealing with Amplitude, we like our events to follow a given schema.
--- Data in Amplitude is, effectively, immutable, and having a common schema
--- among events of the same name means we'll be able to write more structured
--- queries. With this class, we can define the event "name" along with the
--- properties that it should have, and use this to assist type inference.
---
--- Note that, strictly speaking, you can include /any/ types in an Amplitude
--- event, but only the primitive types survive the trip. Note also that
--- Amplitude cares only about the JavaScript representation, so it is probably
--- best to stick to records of Int/String/Bool/Float. Note that nested records
--- are also flattened: `{ a: { b: 2 } }` becomes `{ "a.b": 2 }`, and so on.
---
--- ```
--- instance addUserEvent ∷ Topology "Play Song or Video"
---   { Content_ID   ∷ Int
---   , Content_Type ∷ String
---   , Duration     ∷ Int
---   , Genre_Type   ∷ String
---   , Source       ∷ Source
---   }
--- ```
-class Topology (name ∷ Symbol) (structure ∷ # Type) | name → structure
+class Taxonomy (label ∷ Type) (structure ∷ Type) | label → structure
 
-newtype UserProperties = UserProperties {}
-newtype Revenue = Revenue {}
-newtype Config = Config {}
-newtype Key = Key String
-newtype UserId = UserId String
-newtype Identify = Identify {}
+newtype Revenue
+  = Revenue {}
 
-type Status = { responseCode ∷ Int, responseBody ∷ String }
+newtype Key
+  = Key String
+
+newtype UserId
+  = UserId String
+
+newtype Identify
+  = Identify {}
+
+type Status
+  = { responseCode ∷ Int
+    , responseBody ∷ String
+    }
 
 foreign import data AmplitudeClient ∷ Type
 
@@ -77,12 +67,14 @@ foreign import identifyImpl ∷ EffectFn2 AmplitudeClient Identify (EffectFnAff 
 
 -- Initializes the Amplitude JavaScript SDK with your apiKey and any optional
 -- configurations. This is required before any other methods can be called.
-init ∷ Key → Maybe UserId → Maybe Config → Aff AmplitudeClient
+init
+  ∷ ∀ overrides. Union overrides Config Config
+  ⇒ Key → Maybe UserId → { | overrides } → Aff AmplitudeClient
 init key userId config
-  = liftEffect (runEffectFn3 initImpl key (toNullable userId) (toNullable config))
+  = liftEffect (runEffectFn3 initImpl key (toNullable userId) config)
       >>= fromEffectFnAff
 
-foreign import initImpl ∷ EffectFn3 Key (Nullable UserId) (Nullable Config) (EffectFnAff AmplitudeClient)
+foreign import initImpl ∷ ∀ config. EffectFn3 Key (Nullable UserId) config (EffectFnAff AmplitudeClient)
 
 -- Returns true if a new session was created during initialization, otherwise
 -- false.
@@ -91,40 +83,28 @@ isNewSession = runEffectFn1 isNewSessionImpl
 
 foreign import isNewSessionImpl ∷ EffectFn1 AmplitudeClient Boolean
 
--- Log an event with a given topology. Consistency is ensured through types!
---
--- Somewhere in your code, you must define `Topology` instances for your
--- events:
---
--- ```
--- instance Topology "page_viewed" { url ∷ String, other_property ∷ Int }
--- ```
---
--- You can then define a function for logging this event:
---
--- ```
--- pageViewed ∷ { url ∷ String, other_property ∷ Int } → Aff Status
--- pageViewed = logEvent (SProxy ∷ SProxy "page_viewed")
--- ```
---
--- The `SProxy` enforces the type of the payload, making sure that our logging
--- for any given event is consistent throughout!
 logEvent
-  ∷ ∀ name payload. Topology name payload ⇒ IsSymbol name
-  ⇒ AmplitudeClient → SProxy name → { | payload } → Aff Status
-logEvent client label payload
-  = liftEffect (runEffectFn3 logEventImpl client (reflectSymbol label) payload)
+  ∷ ∀ f name payload. Taxonomy (f name) payload ⇒ IsSymbol name
+  ⇒ f name → AmplitudeClient → payload → Aff Status
+logEvent _ client payload
+  = liftEffect (runEffectFn3 logEventImpl client label payload)
       >>= fromEffectFnAff
+  where
+    label ∷ String
+    label = reflectSymbol (SProxy ∷ SProxy name)
 
 foreign import logEventImpl ∷ ∀ payload. EffectFn3 AmplitudeClient String payload (EffectFnAff Status)
 
 -- Log an event with eventType, eventProperties, and a custom timestamp.
 logEventWithTimestamp
-  ∷ ∀ name payload. Topology name payload ⇒ IsSymbol name
-  ⇒ AmplitudeClient → SProxy name → { | payload } → Int → Aff Status
-logEventWithTimestamp client label payload timestamp
-  = liftEffect (runEffectFn4 logEventWithTimestampImpl client (reflectSymbol label) payload timestamp)
+  ∷ ∀ f name payload. Taxonomy (f name) payload ⇒ IsSymbol name
+  ⇒ AmplitudeClient → f name → payload → Int → Aff Status
+logEventWithTimestamp client _ payload timestamp
+  = liftEffect (runEffectFn4 logEventWithTimestampImpl client label payload timestamp)
       >>= fromEffectFnAff
+  where
+    label ∷ String
+    label = reflectSymbol (SProxy ∷ SProxy name)
 
 foreign import logEventWithTimestampImpl ∷ ∀ payload. EffectFn4 AmplitudeClient String payload Int (EffectFnAff Status)
 
@@ -196,10 +176,10 @@ setUserId = runEffectFn2 setUserIdImpl
 foreign import setUserIdImpl ∷ EffectFn2 AmplitudeClient String Unit
 
 -- Sets user properties for the current user.
-setUserProperties ∷ AmplitudeClient → UserProperties → Effect Unit
+setUserProperties ∷ ∀ properties. AmplitudeClient → { | properties } → Effect Unit
 setUserProperties = runEffectFn2 setUserPropertiesImpl
 
-foreign import setUserPropertiesImpl ∷ EffectFn2 AmplitudeClient UserProperties Unit
+foreign import setUserPropertiesImpl ∷ ∀ properties. EffectFn2 AmplitudeClient { | properties } Unit
 
 -- Set a `versionName` for your application.
 setVersionName ∷ AmplitudeClient → String → Effect Unit

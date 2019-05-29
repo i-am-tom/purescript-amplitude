@@ -1,0 +1,12 @@
+{
+  "name": "purescript-amplitude",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:i-am-tom/purescript-amplitude.git",
+  "author": "Tom Harding <tom.harding@habito.com>",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "amplitude-js": "^5.2.2"
+  }
+}
