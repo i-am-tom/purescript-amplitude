@@ -11,21 +11,15 @@ import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, runEffectFn1, EffectFn2, runEffectFn2, EffectFn3, runEffectFn3, EffectFn4, runEffectFn4)
 import Prelude
 import Prim.Row (class Union)
-import Type.Proxy (Proxy (..))
+import Data.Amplitude.Tracking.Identify (Identify)
+import Data.Amplitude.Tracking.Revenue (Revenue)
 
-class Taxonomy (label ∷ Type) (structure ∷ Type) | label → structure
+class Taxonomy (label ∷ Type) (structure ∷ Type)
+  | label → structure
 
-newtype Revenue
-  = Revenue {}
+newtype Key = Key String
 
-newtype Key
-  = Key String
-
-newtype UserId
-  = UserId String
-
-newtype Identify
-  = Identify {}
+newtype UserId = UserId String
 
 type Status
   = { responseCode ∷ Int

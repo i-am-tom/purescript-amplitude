@@ -57,7 +57,14 @@ exports.logEventWithTimestampImpl = function (client, tag, payload, timestamp) {
 }
 
 exports.logRevenueV2Impl = function (client, revenue) {
-  return client.logRevenueV2(revenue)
+  return client.logRevenueV2(
+    new amplitude
+          .Revenue()
+          .setEventProperties(revenue.payload)
+          .setPrice(revenue.price)
+          .setProductId(revenue.productId)
+          .setQuantity(revenue.quantity)
+          .setRevenueType(revenue.revenueType))
 }
 
 exports.regenerateDeviceIdImpl = function (client) {
