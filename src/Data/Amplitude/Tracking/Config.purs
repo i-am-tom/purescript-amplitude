@@ -1,6 +1,6 @@
 module Data.Amplitude.Tracking.Config where
 
-import Data.Time.Duration (Milliseconds (..))
+import Data.Time.Duration (Milliseconds)
 
 type Config
   = ( -- If true, then events are batched together and uploaded only when the

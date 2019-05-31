@@ -1,6 +1,6 @@
 module Data.Amplitude.Tracking.Revenue where
 
-import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
+import Data.Function.Uncurried (Fn2, runFn2)
 import Effect (Effect)
 
 foreign import data Revenue ∷ Type
