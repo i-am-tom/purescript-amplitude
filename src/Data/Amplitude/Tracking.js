@@ -1,18 +1,24 @@
 'use strict'
 
 var amplitude = require('amplitude-js')
+  , client    = null
+  , error     = new Error("Amplitude has not been initialised!")
 
 exports.version = amplitude.__VERSION__
 
-exports.clearUserPropertiesImpl = function (client) {
-  return client.clearUserProperties()
+exports.clearUserProperties = function () {
+  if (client == null) throw error
+  client.clearUserProperties()
 }
 
-exports.getSessionIdImpl = function (client) {
+exports.getSessionIdImpl = function () {
+  if (client == null) throw error
   return client.getSessionId()
 }
 
-exports.identifyImpl = function (client, identify) {
+exports.identifyImpl = function (identify) {
+  if (client == null) throw error
+
   return function (onError, onSuccess) {
     client.identify(identify, function (code, body) {
       200 <= code && code < 300
@@ -24,19 +30,22 @@ exports.identifyImpl = function (client, identify) {
 
 exports.initImpl = function (key, userId, config) {
   return function (onError, onSuccess) {
-    var client = amplitude.getInstance()
+    client = amplitude.getInstance()
 
-    amplitude.init(key, userId, config, function () {
-      onSuccess(client)
+    client.init(key, userId, config, function () {
+      onSuccess()
     })
   }
 }
 
-exports.isNewSessionImpl = function (client) {
+exports.isNewSession = function () {
+  if (client == null) throw error
   return client.isNewSession()
 }
 
-exports.logEventImpl = function (client, tag, payload) {
+exports.logEventImpl = function (tag, payload) {
+  if (client == null) throw error
+
   return function (onError, onSuccess) {
     client.logEvent(tag, payload, function (code, body) {
       200 <= code && code < 300
@@ -46,7 +55,9 @@ exports.logEventImpl = function (client, tag, payload) {
   }
 }
 
-exports.logEventWithTimestampImpl = function (client, tag, payload, timestamp) {
+exports.logEventWithTimestampImpl = function (tag, payload, timestamp) {
+  if (client == null) throw error
+
   return function (onError, onSuccess) {
     client.logEvent(tag, payload, timestamp, function (code, body) {
       200 <= code && code < 300
@@ -56,9 +67,11 @@ exports.logEventWithTimestampImpl = function (client, tag, payload, timestamp) {
   }
 }
 
-exports.logRevenueV2Impl = function (client, revenue) {
+exports.logRevenueV2Impl = function (revenue) {
+  if (client == null) throw error
+
   return client.logRevenueV2(
-    new amplitude
+    new client
           .Revenue()
           .setEventProperties(revenue.payload)
           .setPrice(revenue.price)
@@ -67,38 +80,47 @@ exports.logRevenueV2Impl = function (client, revenue) {
           .setRevenueType(revenue.revenueType))
 }
 
-exports.regenerateDeviceIdImpl = function (client) {
+exports.regenerateDeviceId = function () {
+  if (client == null) throw error
   return client.regenerateDeviceId()
 }
 
-exports.setDeviceIdImpl = function (client, deviceId) {
+exports.setDeviceIdImpl = function (deviceId) {
+  if (client == null) throw error
   return client.setDeviceId(deviceId)
 }
 
-exports.setDomainImpl = function (client, domain) {
+exports.setDomainImpl = function (domain) {
+  if (client == null) throw error
   return client.setDomain(domain)
 }
 
-exports.setGroupImpl = function (client, groupType, groupName) {
+exports.setGroupImpl = function (groupType, groupName) {
+  if (client == null) throw error
   return client.setGroup(groupType, groupName)
 }
 
-exports.setOptOutImpl = function (client, enable) {
+exports.setOptOutImpl = function (enable) {
+  if (client == null) throw error
   return client.setOptOut(enable)
 }
 
-exports.setUserIdImpl = function (client, userId) {
+exports.setUserIdImpl = function (userId) {
+  if (client == null) throw error
   return client.setUserId(userId)
 }
 
-exports.setUserPropertiesImpl = function (client, userProperties) {
+exports.setUserPropertiesImpl = function (userProperties) {
+  if (client == null) throw error
   return client.setUserProperties(userProperties)
 }
 
-exports.setVersionNameImpl = function (client, version) {
+exports.setVersionNameImpl = function (version) {
+  if (client == null) throw error
   return client.setVersionName(version)
 }
 
-exports.setSessionIdImpl = function (client, sessionId) {
+exports.setSessionIdImpl = function (sessionId) {
+  if (client == null) throw error
   return client.setSessionId(sessionId)
 }
