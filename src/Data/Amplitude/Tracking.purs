@@ -59,10 +59,10 @@ init
   ⇒ String → Maybe String → { | overrides } → Aff Unit
 init key userId
   = Uncurried.runEffectFn3 initImpl key (toNullable userId)
-      >>> liftEffect
+      >>> liftEffect >=> fromEffectFnAff
 
 foreign import initImpl
-  ∷ ∀ config. Uncurried.EffectFn3 String (Nullable String) config Unit
+  ∷ ∀ config. Uncurried.EffectFn3 String (Nullable String) config (EffectFnAff Unit)
 
 -- Returns true if a new session was created during initialization, otherwise
 -- false.
