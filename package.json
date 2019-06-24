@@ -8,5 +8,11 @@
   "private": true,
   "dependencies": {
     "amplitude-js": "^5.2.2"
+  },
+  "scripts": {
+    "test": "spago build && parcel test/index.html"
+  },
+  "devDependencies": {
+    "parcel": "^1.12.3"
   }
 }
