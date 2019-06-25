@@ -31,10 +31,17 @@ exports.identifyImpl = function (identify) {
 }
 
 exports.initImpl = function (key, userId, config) {
-  return function (_, onSuccess) {
+  return function (onError, onSuccess) {
     client = amplitude.getInstance()
 
-    client.init(key, userId, config, onSuccess)
+    // Forgive us, Padre. The problem here is that, regardless of whether the
+    // initialisation succeeds or not, the result is always `undefined`. To
+    // figure out whether or not anything actually _did_ work, we'll use a
+    // little stateful flag.
+    var didItWork = false
+    client.init(key, userId, config, function () { didItWork = true })
+
+    didItWork ? onSuccess() : onError()
   }
 }
 
