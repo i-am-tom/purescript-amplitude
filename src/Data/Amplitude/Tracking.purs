@@ -6,7 +6,6 @@ import Data.Amplitude.Tracking.Revenue (Revenue)
 import Data.Maybe (Maybe)
 import Data.Nullable (Nullable, toNullable)
 import Data.Symbol (class IsSymbol, SProxy (..), reflectSymbol)
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
 import Effect.Class (liftEffect)
@@ -36,10 +35,16 @@ foreign import version ∷ String
 -- _Note: Clearing user properties is irreversible! Amplitude will not be able
 -- to sync the user's user property values before the wipe to any future events
 -- that the user triggers as they will have been reset._
-foreign import clearUserProperties ∷ Effect Unit
+clearUserProperties ∷ Aff Unit
+clearUserProperties = fromEffectFnAff clearUserPropertiesImpl
+
+foreign import clearUserPropertiesImpl ∷ EffectFnAff Unit
 
 -- Returns the ID of the current session.
-foreign import getSessionIdImpl ∷ Effect Int
+getSessionId ∷ Aff Int
+getSessionId = fromEffectFnAff getSessionIdImpl
+
+foreign import getSessionIdImpl ∷ EffectFnAff Int
 
 -- Send an identify call containing user property operations to Amplitude
 -- servers. See the [JavaScript SDK
@@ -66,7 +71,11 @@ foreign import initImpl
 
 -- Returns true if a new session was created during initialization, otherwise
 -- false.
-foreign import isNewSession ∷ Effect Boolean
+isNewSession ∷ Aff Boolean
+isNewSession = fromEffectFnAff isNewSessionImpl
+
+foreign import isNewSessionImpl
+  ∷ EffectFnAff Boolean
 
 -- If we have a valid label/payload matchg, log an event with eventType and
 -- eventProperties.
@@ -101,10 +110,10 @@ foreign import logEventWithTimestampImpl
 -- more revenue fields like 'revenueType' and event properties. See the [SDK
 -- documentation](https://amplitude.zendesk.com/hc/en-us/articles/115001361248#tracking-revenue)
 -- for more information on the Revenue interface and logging revenue.
-logRevenueV2 ∷ Revenue → Effect Unit
-logRevenueV2 = Uncurried.runEffectFn1 logRevenueV2Impl
+logRevenueV2 ∷ Revenue → Aff Unit
+logRevenueV2 = Uncurried.runEffectFn1 logRevenueV2Impl >>> liftEffect >=> fromEffectFnAff
 
-foreign import logRevenueV2Impl ∷ Uncurried.EffectFn1 Revenue Unit
+foreign import logRevenueV2Impl ∷ Uncurried.EffectFn1 Revenue (EffectFnAff Unit)
 
 -- Regenerates a new random deviceId for the current user. _Note: This is not
 -- recommended unless you know what you are doing_. This can be used in
@@ -113,7 +122,10 @@ foreign import logRevenueV2Impl ∷ Uncurried.EffectFn1 Revenue Unit
 -- a null userId and a completely new `deviceId`. This uses
 -- [src/uuid.js](https://github.com/amplitude/Amplitude-Javascript/blob/master/src/uuid.js)
 -- to regenerate the `deviceId`.
-foreign import regenerateDeviceId ∷ Effect Unit
+regenerateDeviceId ∷ Aff Unit
+regenerateDeviceId = fromEffectFnAff regenerateDeviceIdImpl
+
+foreign import regenerateDeviceIdImpl ∷ EffectFnAff Unit
 
 -- Sets a custom `deviceId` for the current user. Note: This is not recommended
 -- unless you know what you are doing (e.g. you have your own system for
@@ -122,18 +134,21 @@ foreign import regenerateDeviceId ∷ Effect Unit
 -- [src/uuid.js](https://github.com/amplitude/Amplitude-Javascript/blob/master/src/uuid.js)
 -- for an example of how to generate) to prevent conflicts with other devices
 -- in our system.
-setDeviceId ∷ String → Effect Unit
-setDeviceId = Uncurried.runEffectFn1 setDeviceIdImpl
+setDeviceId ∷ String → Aff Unit
+setDeviceId
+  = Uncurried.runEffectFn1 setDeviceIdImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setDeviceIdImpl
-  ∷ Uncurried.EffectFn1 String Unit
+  ∷ Uncurried.EffectFn1 String (EffectFnAff Unit)
 
 -- Sets a custom domain for the Amplitude cookie. This is useful if you want to
 -- support cross-subdomain tracking.
-setDomain ∷ String → Effect Unit
-setDomain = Uncurried.runEffectFn1 setDomainImpl
+setDomain ∷ String → Aff Unit
+setDomain
+  = Uncurried.runEffectFn1 setDomainImpl >>> liftEffect >=> fromEffectFnAff
 
-foreign import setDomainImpl ∷ Uncurried.EffectFn1 String Unit
+foreign import setDomainImpl
+  ∷ Uncurried.EffectFn1 String (EffectFnAff Unit)
 
 -- Add a user to a group or groups. You will need to specify a `groupType` and
 -- `groupName`(s). For example, you can group people by their organization, in
@@ -145,46 +160,53 @@ foreign import setDomainImpl ∷ Uncurried.EffectFn1 String Unit
 -- user property_. See the [SDK
 -- installation](https://amplitude.zendesk.com/hc/en-us/articles/115001361248#setting-groups)
 -- documentation for more information.
-setGroup ∷ String → Array String → Effect Unit
-setGroup = Uncurried.runEffectFn2 setGroupImpl
+setGroup ∷ String → Array String → Aff Unit
+setGroup group
+  = Uncurried.runEffectFn2 setGroupImpl group >>> liftEffect >=> fromEffectFnAff
 
-foreign import setGroupImpl ∷ Uncurried.EffectFn2 String (Array String) Unit
+foreign import setGroupImpl
+  ∷ Uncurried.EffectFn2 String (Array String) (EffectFnAff Unit)
 
 -- Sets whether to opt current user out of tracking.
-setOptOut ∷ Boolean → Effect Unit
-setOptOut = Uncurried.runEffectFn1 setOptOutImpl
+setOptOut ∷ Boolean → Aff Unit
+setOptOut
+  = Uncurried.runEffectFn1 setOptOutImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setOptOutImpl
-  ∷ Uncurried.EffectFn1 Boolean Unit
+  ∷ Uncurried.EffectFn1 Boolean (EffectFnAff Unit)
 
 -- Sets an identifier for the current user.
-setUserId ∷ String → Effect Unit
-setUserId = Uncurried.runEffectFn1 setUserIdImpl
+setUserId ∷ String → Aff Unit
+setUserId
+  = Uncurried.runEffectFn1 setUserIdImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setUserIdImpl
-  ∷ Uncurried.EffectFn1 String Unit
+  ∷ Uncurried.EffectFn1 String (EffectFnAff Unit)
 
 -- Sets user properties for the current user.
-setUserProperties ∷ ∀ properties. { | properties } → Effect Unit
-setUserProperties = Uncurried.runEffectFn1 setUserPropertiesImpl
+setUserProperties ∷ ∀ properties. { | properties } → Aff Unit
+setUserProperties
+  = Uncurried.runEffectFn1 setUserPropertiesImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setUserPropertiesImpl
-  ∷ ∀ properties. Uncurried.EffectFn1 { | properties } Unit
+  ∷ ∀ properties. Uncurried.EffectFn1 { | properties } (EffectFnAff Unit)
 
 -- Set a `versionName` for your application.
-setVersionName ∷ String → Effect Unit
-setVersionName = Uncurried.runEffectFn1 setVersionNameImpl
+setVersionName ∷ String → Aff Unit
+setVersionName
+  = Uncurried.runEffectFn1 setVersionNameImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setVersionNameImpl
-  ∷ Uncurried.EffectFn1 String Unit
+  ∷ Uncurried.EffectFn1 String (EffectFnAff Unit)
 
 -- Set a custom [Session
 -- ID](https://amplitude.zendesk.com/hc/en-us/articles/115002323627#session-id)
 -- for the current session. _Note: This is not recommended unless you know what
 -- you are doing because the Session ID of a session is utilized for all
 -- session metrics in Amplitude._
-setSessionId ∷ Int → Effect Unit
-setSessionId = Uncurried.runEffectFn1 setSessionIdImpl
+setSessionId ∷ Int → Aff Unit
+setSessionId
+  = Uncurried.runEffectFn1 setSessionIdImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import setSessionIdImpl
-  ∷ Uncurried.EffectFn1 Int Unit
+  ∷ Uncurried.EffectFn1 Int (EffectFnAff Unit)
