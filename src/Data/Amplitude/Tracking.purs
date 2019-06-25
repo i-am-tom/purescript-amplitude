@@ -4,6 +4,7 @@ import Data.Amplitude.Tracking.Config (Config)
 import Data.Amplitude.Tracking.Identify (Identify)
 import Data.Amplitude.Tracking.Revenue (Revenue)
 import Data.Maybe (Maybe)
+import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, toNullable)
 import Data.Symbol (class IsSymbol, SProxy (..), reflectSymbol)
 import Effect.Aff (Aff)
@@ -12,6 +13,12 @@ import Effect.Class (liftEffect)
 import Effect.Uncurried as Uncurried
 import Prelude
 import Prim.Row (class Union)
+
+newtype ApiKey = ApiKey String
+
+derive         instance newtypeApiKey :: Newtype ApiKey _
+derive newtype instance eqApiKey      :: Eq      ApiKey
+derive newtype instance showApiKey    :: Show    ApiKey
 
 -- We require all events in a taxonomy to be labelled, and then we use this
 -- label as the event name. The functional dependency means that any two events
@@ -61,8 +68,8 @@ foreign import identifyImpl
 -- configurations. This is required before any other methods can be called.
 init
   ∷ ∀ overrides. Union overrides Config Config
-  ⇒ String → Maybe String → { | overrides } → Aff Unit
-init key userId
+  ⇒ ApiKey → Maybe String → { | overrides } → Aff Unit
+init (ApiKey key) userId
   = Uncurried.runEffectFn3 initImpl key (toNullable userId)
       >>> liftEffect >=> fromEffectFnAff
 

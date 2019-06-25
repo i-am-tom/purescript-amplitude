@@ -19,7 +19,7 @@ main = do
     Nothing  -> throw "You must enter an Amplitude key!"
 
   launchAff_ do
-    Amplitude.init key (Just "Testing User") {}
+    Amplitude.init (Amplitude.ApiKey key) (Just "Testing User") {}
 
     url <- liftEffect $ DOM.window >>= DOM.location >>= DOM.href
     Amplitude.logEvent Taxonomy.viewedAPage { url }
