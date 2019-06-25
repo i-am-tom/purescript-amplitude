@@ -67,7 +67,8 @@ foreign import identifyImpl
 -- Initializes the Amplitude JavaScript SDK with your apiKey and any optional
 -- configurations. This is required before any other methods can be called.
 init
-  ∷ ∀ overrides. Union overrides Config Config
+  ∷ ∀ defaults overrides
+  . Union overrides defaults Config
   ⇒ ApiKey → Maybe String → { | overrides } → Aff Unit
 init (ApiKey key) userId
   = Uncurried.runEffectFn3 initImpl key (toNullable userId)
