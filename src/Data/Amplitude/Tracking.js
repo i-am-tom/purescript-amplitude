@@ -1,6 +1,6 @@
 'use strict'
 
-var amplitude = require('amplitude-js')
+var amplitude = typeof window == "undefined" ? {} : require('amplitude-js')
   , client    = null
   , error     = "Amplitude has not been initialised!"
 
