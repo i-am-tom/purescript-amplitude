@@ -1,7 +1,7 @@
 module Data.Amplitude.Tracking where
 
 import Data.Amplitude.Tracking.Config (Config)
-import Data.Amplitude.Tracking.Identify (Identify)
+import Data.Amplitude.Tracking.Identify (Builder)
 import Data.Amplitude.Tracking.Revenue (Revenue)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
@@ -57,12 +57,12 @@ foreign import getSessionIdImpl ∷ EffectFnAff Int
 -- servers. See the [JavaScript SDK
 -- Installation](https://amplitude.zendesk.com/hc/en-us/articles/115001361248#setting-user-properties)
 -- documentation for more information.
-identify ∷ Identify → Aff Status
+identify ∷ Builder → Aff Status
 identify
     = Uncurried.runEffectFn1 identifyImpl >>> liftEffect >=> fromEffectFnAff
 
 foreign import identifyImpl
-  ∷ Uncurried.EffectFn1 Identify (EffectFnAff Status)
+  ∷ Uncurried.EffectFn1 Builder (EffectFnAff Status)
 
 -- Initializes the Amplitude JavaScript SDK with your apiKey and any optional
 -- configurations. This is required before any other methods can be called.

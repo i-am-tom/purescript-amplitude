@@ -2,6 +2,7 @@ module Test.Main where
 
 import Control.Monad.Error.Class (catchError)
 import Data.Amplitude.Tracking as Amplitude
+import Data.Amplitude.Tracking.Identify as Identify
 import Data.Maybe (Maybe (..))
 import Effect (Effect)
 import Effect.Aff (forkAff, launchAff_)
@@ -25,5 +26,6 @@ main = do
 
     url <- liftEffect $ DOM.window >>= DOM.location >>= DOM.href
     _ <- forkAff $ Amplitude.logEvent Taxonomy.viewedAPage { url }
+    _ <- forkAff $ Amplitude.identify (Identify.set "Test property" 2)
 
     liftEffect (log "\"Test suite\" passed!")

@@ -1,52 +1,48 @@
 module Data.Amplitude.Tracking.Identify where
 
 import Data.Function.Uncurried (Fn2, runFn2, Fn3, runFn3)
-import Effect (Effect)
+import Prelude
 
 foreign import data Identify ∷ Type
 
 newtype Builder
-  = Builder Identify
+  = Builder (Identify → Identify)
+  -- deriving (Semigroup, Monoid) via (Endo Identify)
 
--- Very ad-hoc ST interface for MVP.
+instance semigroupBuilder ∷ Semigroup Builder where
+  append (Builder f) (Builder g) = Builder (f <<< g)
 
-run ∷ Builder → Identify
-run (Builder identify) = identify -- TODO copy before "thawing"
+instance monoidBuilder ∷ Monoid Builder where
+  mempty = Builder identity
 
-foreign import create ∷ Effect Builder
+---
 
-add ∷ String → Int → (Builder → Builder)
-add property value (Builder identify)
-  = Builder (runFn3 addImpl property value identify)
+add ∷ String → Int → Builder
+add property value = Builder (runFn3 addImpl property value)
 
 foreign import addImpl ∷ Fn3 String Int Identify Identify
 
-append ∷ ∀ item. String → item → (Builder → Builder)
-append property value (Builder identify)
-  = Builder (runFn3 appendImpl property value identify)
+append ∷ ∀ item. String → item → Builder
+append property value = Builder (runFn3 appendImpl property value)
 
 foreign import appendImpl ∷ ∀ item. Fn3 String item Identify Identify
 
-prepend ∷ ∀ item. String → item → (Builder → Builder)
-prepend property value (Builder identify)
-  = Builder (runFn3 prependImpl property value identify)
+prepend ∷ ∀ item. String → item → Builder
+prepend property value = Builder (runFn3 prependImpl property value)
 
 foreign import prependImpl ∷ ∀ item. Fn3 String item Identify Identify
 
-set ∷ ∀ item. String → item → (Builder → Builder)
-set property value (Builder identify)
-  = Builder (runFn3 setImpl property value identify)
+set ∷ ∀ item. String → item → Builder
+set property value = Builder (runFn3 setImpl property value)
 
 foreign import setImpl ∷ ∀ item. Fn3 String item Identify Identify
 
-setOnce ∷ ∀ item. String → item → (Builder → Builder)
-setOnce property value (Builder identify)
-  = Builder (runFn3 setOnceImpl property value identify)
+setOnce ∷ ∀ item. String → item → Builder
+setOnce property value = Builder (runFn3 setOnceImpl property value)
 
 foreign import setOnceImpl ∷ ∀ item. Fn3 String item Identify Identify
 
-unset ∷ String → (Builder → Builder)
-unset property (Builder identify)
-  = Builder (runFn2 unsetImpl property identify)
+unset ∷ String → Builder
+unset property = Builder (runFn2 unsetImpl property)
 
 foreign import unsetImpl ∷ Fn2 String Identify Identify

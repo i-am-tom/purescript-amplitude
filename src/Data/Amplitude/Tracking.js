@@ -18,14 +18,15 @@ exports.getSessionIdImpl = function (onError, onSuccess) {
     : onSuccess(client.getSessionId())
 }
 
-exports.identifyImpl = function (identify) {
+exports.identifyImpl = function (builder) {
   return function (onError, onSuccess) {
     return client == null
       ? onError(error)
-      : client.identify(identify, function (code, body) {
+      : client.identify(
+          builder(new client.Identify()), function (code, body) {
           200 <= code && code < 300
             ? onSuccess ({ code: code, body: body })
-            : onError   (body)
+            : onError (body)
         })
   }
 }

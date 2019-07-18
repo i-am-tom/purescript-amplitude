@@ -1,11 +1,5 @@
 'use strict'
 
-var amplitude = require('amplitude-js')
-
-exports.create = function (amplitude) {
-  return new amplitude.Identify()
-}
-
 exports.addImpl = function (key, value, identify) {
   return identify.add(key, value)
 }
